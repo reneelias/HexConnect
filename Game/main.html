@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <title>HexConnect</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <!-- <script src="/external/phaser.js"></script> -->
     <style type="text/css">
         body {
             margin: 0;
@@ -28,22 +29,56 @@
         };
 
         var game = new Phaser.Game(config);
+        var hex;
+        var hexagons;
 
         function preload() {
+            this.load.image('background', 'assets/Background.png');
             this.load.image('hex', 'assets/HexagonPiece50.png');
-            this.load.spritesheet('dude',
-                'assets/dude.png',
-                { frameWidth: 32, frameHeight: 48 }
-            );
+
         }
 
-        var hexagon;
+        var size;
+        var text;
 
         function create() {
-            this.add.image(400, 300, 'hex');
+            this.add.image(400, 300, 'background');
+            // this.add.image(400, 300, 'hex');
+            // hex = this.add.sprite(400, 300, 'hex');
+            // hex.tint = 0x47ed8a;
+            hexagons = [];
+            var y = 200;
+            var x = 200;
+            for (var j = 0; j < 6; j++) {
+                if((j + 1) % 2 == 0) {
+                    x = 200 + tempHex.height / 2.0;
+                }
+                else{
+                    x = 200;
+                }
+                for (var i = 0; i < 10; i++) {
+                    var tempHex = this.add.sprite(x, y, 'hex');
+                    tempHex.angle += 90;
+                    x += tempHex.height;
+                    tempHex.tint = Math.random() * 0xffffff;
+                    tempHex.inputEnabled = true;
+                    // tempHex.events.onInputDown.add(listener, this);
+                    hexagons.push(tempHex);
+                }
+                y += hexagons[0].height - 6;
+            }
+            size = 0;
+
+            text = this.add.text(16, 16, 'length: ' + size, { fontSize: '32px', fill: '#000' });;
         }
 
         function update() {
+            text.text = "x: " + this.input.mousePointer.x + ", y: " + this.input.mousePointer.y;
+        }
+
+        function listener () {
+            size++;
+            text.text = "clicks: " + size;
         }
 
     </script>
