@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <title>HexConnect</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
-    <!-- <script src="/external/phaser.js"></script> -->
+    <script src="js/Hexagon.js"></script> -->
     <style type="text/css">
         body {
             margin: 0;
@@ -34,7 +34,7 @@
 
         function preload() {
             this.load.image('background', 'assets/Background.png');
-            this.load.image('hex', 'assets/HexagonPiece50.png');
+            this.load.image('hex', 'assets/HexagonPiece50Rot.png');
 
         }
 
@@ -43,43 +43,53 @@
 
         function create() {
             this.add.image(400, 300, 'background');
-            // this.add.image(400, 300, 'hex');
-            // hex = this.add.sprite(400, 300, 'hex');
-            // hex.tint = 0x47ed8a;
+            //color order: yellow, green, blue, red
+            colors = [0xffc219, 0x5ae63e, 0x4e57f5, 0xf04848];
             hexagons = [];
-            var y = 200;
-            var x = 200;
-            for (var j = 0; j < 6; j++) {
-                if((j + 1) % 2 == 0) {
-                    x = 200 + tempHex.height / 2.0;
+            var horHexNum = 6;
+            var verHexNum = 6;
+            var y = ( game.config.height - (50 - 13) * verHexNum ) / 2;
+            var startingX = ( game.config.width - 43 * horHexNum ) / 2;
+            var x = startingX;
+            for (var j = 0; j < verHexNum; j++) {
+                if ((j + 1) % 2 == 0) {
+                    x = startingX + hexagons[hexagons.length - 1].width / 2.0;
                 }
-                else{
-                    x = 200;
+                else {
+                    x = startingX;
                 }
-                for (var i = 0; i < 10; i++) {
-                    var tempHex = this.add.sprite(x, y, 'hex');
-                    tempHex.angle += 90;
-                    x += tempHex.height;
-                    tempHex.tint = Math.random() * 0xffffff;
-                    tempHex.inputEnabled = true;
-                    // tempHex.events.onInputDown.add(listener, this);
-                    hexagons.push(tempHex);
+                for (var i = 0; i < horHexNum; i++) {
+                    var randomTint = colors[Math.floor(Math.random() * Math.floor(colors.length))];
+                    hexagons.push(new Hexagon({scene: this, x: x, y: y, texture: 'hex', tint: randomTint}));
+                    x +=  hexagons[hexagons.length - 1].width;
                 }
-                y += hexagons[0].height - 6;
+                y += hexagons[0].height - 13;
             }
             size = 0;
-
-            text = this.add.text(16, 16, 'length: ' + size, { fontSize: '32px', fill: '#000' });;
+            text = this.add.text(16, 16, 'length: ' + size, { fontSize: '32px', fill: '#000' });
+            // recText = this.add.text(16, 46, 'width: ' +  + ", texture width: " + hexImage.width, { fontSize: '32px', fill: '#000' });
         }
+
+        var recText;
+        var mouseX, mouseY;
+        
 
         function update() {
-            text.text = "x: " + this.input.mousePointer.x + ", y: " + this.input.mousePointer.y;
+            mouseX = game.input.mousePointer.x;
+            mouseY = game.input.mousePointer.y;
+            text.setText("x: " + game.input.mousePointer.x + ", y: " + game.input.mousePointer.y);
+
+            hexagons.forEach(
+                hexagon => {hexagon.update()}
+            );
         }
 
-        function listener () {
+        function listener() {
             size++;
             text.text = "clicks: " + size;
         }
+
+
 
     </script>
 
