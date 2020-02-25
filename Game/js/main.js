@@ -20,24 +20,24 @@ function preload() {
 
 var size;
 var text;
+var recText;
+var mouseX, mouseY;
+var background;
 
 function create() {
-    this.add.image(400, 300, 'background');
+    // this.add.image(game.config.width / 2, game.config.height / 2, 'background');
+    background = this.add.sprite(game.config.width / 2, game.config.height / 2, 'background');
+    background.setScale(game.config.width / 800, game.config.height / 600);
     // game.input.mouse.capture = true;
     hexboard = new HexBoard({scene: this, game: game, size: 6});
-    size = 0;
-    text = this.add.text(16, 16, 'length: ' + size, { fontSize: '32px', fill: '#000' });
+    // text = this.add.text(16, 16, 'length: ' + size, { fontSize: '32px', fill: '#000' });
     // recText = this.add.text(16, 100, "okay", { fontSize: '32px', fill: '#000' });
 }
 
-var recText;
-var mouseX, mouseY;
-
-
 function update() {
-    mouseX = game.input.activePointer.x;
-    mouseY = game.input.activePointer.y;
-    text.setText("x: " + game.input.activePointer.x + ", y: " + game.input.activePointer.y);
+    // mouseX = game.input.activePointer.x;
+    // mouseY = game.input.activePointer.y;
+    // text.setText("x: " + game.input.activePointer.x + ", y: " + game.input.activePointer.y);
     // recText.setText('Elapsed seconds: ' + game.time.getElapsed());
 
     hexboard.update(game);
