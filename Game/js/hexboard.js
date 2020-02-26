@@ -5,6 +5,13 @@ class HexBoard {
         this.positions = [];
         this.clickedHexagons = [];
         this.removedHexagons = [];
+
+        this.flashTexture = config.scene.add.sprite(game.config.width / 2, game.config.height / 2, 'whiteDot');
+        this.flashTexture.setScale(game.config.width, game.config.height);
+        this.flashTexture.alpha = 0;
+        this.flashTriggered = false;
+        this.flashTextureAlpha = 0;
+
         this.colors = [0xffc219, 0x5ae63e, 0x4e57f5, 0xf04848];
         this.createBoard(config.scene, config.game, this.size);
         this.dragging = false;
@@ -18,6 +25,8 @@ class HexBoard {
         // this.containsText = config.scene.add.text(16, 45, 'leftButton.isUp: ' + this.dragging, { fontSize: '32px', fill: '#000' });
         // this.text = config.scene.add.text(16, 70, 'leftButton.isUp: ' + this.dragging, { fontSize: '32px', fill: '#000' });
         this.score = 0;
+        this.clearAllColor = false;
+        this.clearColor;
     }
 
     update(game) {
@@ -33,25 +42,18 @@ class HexBoard {
             }
         });
 
-
         if (!game.input.activePointer.isDown && this.dragging) {
             this.dragging = false;
             this.hexDeletion();
         }
-
-        //Selection of multiple hexagons and removal of hexagons
+        
         if (this.dragging) {
-            this.hexagons.forEach(hexagon => {
-                var lastClickedHex = this.clickedHexagons[this.clickedHexagons.length - 1];
-                var distanceBetweenHexs = Math.ceil(Phaser.Math.Distance.Between(hexagon.x, hexagon.y, lastClickedHex.x, lastClickedHex.y));
+            this.hexSelection();
+        }
 
-                if (hexagon.getBounds().contains(this.mouseX, this.mouseY) && !this.clickedHexagons.includes(hexagon)
-                    && hexagon.color == lastClickedHex.color && distanceBetweenHexs == hexagon.width
-                    && hexagon != lastClickedHex) {
-                    hexagon.click();
-                    this.clickedHexagons.push(hexagon);
-                }
-            });
+
+        if (this.flashTriggered) {
+            this.flashAnimation();
         }
 
         //Debug Text
@@ -61,34 +63,48 @@ class HexBoard {
         // this.text.setText('rect: ' + rect.x + ' ' + rect.y + '|| mouse: ' + this.mouseX + ' ' + this.mouseY);
     }
 
-    createBoard(scene, game, size) {
-        var hexagons = [];
-        var tempHex = scene.add.sprite(100, 100, 'hex');
-        var y = (game.config.height - (tempHex.height - tempHex.height * .26) * this.size) / 2;
-        var startingX = (game.config.width - tempHex.width * this.size + tempHex.width / 2) / 2;
-        var x = startingX;
+    hexSelection() {
+        this.hexagons.forEach(hexagon => {
+            var lastClickedHex = this.clickedHexagons[this.clickedHexagons.length - 1];
+            var distanceBetweenHexs = Math.ceil(Phaser.Math.Distance.Between(hexagon.x, hexagon.y, lastClickedHex.x, lastClickedHex.y));
 
-        for (var j = 0; j < this.size; j++) {
-            if ((j + 1) % 2 == 0) {
-                x = startingX + tempHex.width / 2.0;
+            if (hexagon.getBounds().contains(this.mouseX, this.mouseY)) {
+                //Adds hexagons to selection
+                if (!this.clickedHexagons.includes(hexagon) && hexagon.color == lastClickedHex.color &&
+                    distanceBetweenHexs == hexagon.width && hexagon != lastClickedHex) {
+                    hexagon.click();
+                    this.clickedHexagons.push(hexagon);
+                }
+                //Removes hexagons from selection
+                else if (this.clickedHexagons.includes(hexagon) && this.clickedHexagons.length > 1 &&
+                    hexagon == this.clickedHexagons[this.clickedHexagons.length - 2]) {
+                    this.clickedHexagons[this.clickedHexagons.length - 1].reset();
+                    this.clickedHexagons.pop();
+                }
+                else if (this.clickedHexagons.includes(hexagon) && this.clickedHexagons.length >= 4 &&
+                    hexagon == this.clickedHexagons[0] && distanceBetweenHexs == hexagon.width) {
+                    this.clearAllColor = true;
+                    this.clearColor = hexagon.color;
+                    this.flashTexture.tint = this.clearColor;
+                    this.flashTriggered = true;
+                    this.flashTextureAlpha = .3;
+                    this.flashTexture.alpha = this.flashTextureAlpha;
+                }
             }
-            else {
-                x = startingX;
-            }
-            for (var i = 0; i < size; i++) {
-                var randomTint = this.colors[Math.floor(Math.random() * Math.floor(this.colors.length))];
-                hexagons.push(new Hexagon({ scene: scene, x: x, y: y, texture: 'hex', tint: randomTint }));
-                this.positions.push({ x: x, y: y, occupied: true });
-                x += tempHex.width;
-            }
-            y += tempHex.height - tempHex.height * .26;
-        }
-
-        tempHex.destroy();
-        this.hexagons = hexagons;
+        });
     }
 
     hexDeletion() {
+        if (this.clearAllColor) {
+            this.hexagons.forEach(hexagon => {
+                if (!this.clickedHexagons.includes(hexagon) && hexagon.color == this.clearColor) {
+                    hexagon.click();
+                    this.clickedHexagons.push(hexagon);
+                }
+            });
+            this.clearAllColor = false;
+        }
+
         this.clickedHexagons.forEach(hexagon => {
             hexagon.reset();
             if (this.clickedHexagons.length > 1) {
@@ -142,6 +158,41 @@ class HexBoard {
             if (currentCol < 0) {
                 currentCol = this.size - 1;
             }
+        }
+    }
+
+    createBoard(scene, game, size) {
+        var hexagons = [];
+        var tempHex = scene.add.sprite(100, 100, 'hex');
+        var y = (game.config.height - (tempHex.height - tempHex.height * .26) * this.size) / 2;
+        var startingX = (game.config.width - tempHex.width * this.size + tempHex.width / 2) / 2;
+        var x = startingX;
+
+        for (var j = 0; j < this.size; j++) {
+            if ((j + 1) % 2 == 0) {
+                x = startingX + tempHex.width / 2.0;
+            }
+            else {
+                x = startingX;
+            }
+            for (var i = 0; i < size; i++) {
+                var randomTint = this.colors[Math.floor(Math.random() * Math.floor(this.colors.length))];
+                hexagons.push(new Hexagon({ scene: scene, x: x, y: y, texture: 'hex', tint: randomTint }));
+                this.positions.push({ x: x, y: y, occupied: true });
+                x += tempHex.width;
+            }
+            y += tempHex.height - tempHex.height * .26;
+        }
+
+        tempHex.destroy();
+        this.hexagons = hexagons;
+    }
+
+    flashAnimation() {
+        this.flashTextureAlpha -= .035;
+        this.flashTexture.alpha = this.flashTextureAlpha;
+        if (this.flashTexture.alpha <= 0) {
+            this.flashTriggered = false;
         }
     }
 }
