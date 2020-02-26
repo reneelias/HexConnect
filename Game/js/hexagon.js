@@ -10,9 +10,9 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.tint = this.color;
         config.scene.add.existing(this);
 
-        this.setInteractive();
-        this.on('pointerdown', this.click, this);
-        this.on('pointerup', this.unclicked, this);
+        // this.setInteractive();
+        // this.on('pointerdown', this.click, this);
+        // this.on('pointerup', this.unclicked, this);
 
         this.shrinkActivated = false;
         // config.game.time.events.add(Phaser.Timer.QUARTER, this.shrink, config.scene);
@@ -24,17 +24,20 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.resetY;
     }
 
-    update() {
+    update(activePointer, firstClick) {
         if (this.shrinkActivated) {
             this.shrink();
         }
         if (this.moving && !this.shrinkActivated) {
             this.move();
         }
+        if(activePointer.isDown && this.getBounds().contains(activePointer.x, activePointer.y) &&
+            firstClick){
+            this.click();
+        }
     }
 
     click() {
-        console.log("color: " + this.color)
         this.clicked = true;
         this.setTexture('whiteHex');
     }
@@ -51,7 +54,7 @@ class Hexagon extends Phaser.GameObjects.Sprite {
     shrink() {
         var scaleRate = .75;
         this.setScale(this.scale * scaleRate, this.scale * scaleRate);
-        // this.setScale(.5, .5);
+        
         if (this.scale < .05) {
             this.shrinkActivated = false;
             this.setScale(1, 1);
@@ -66,10 +69,12 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.resetY = startingY;
         this.resetX = startingX;
 
+        //If hexagon is above screen, set a fast speed
         if (this.y <= -startingY || this.shrinkActivated) {
             speed = 25;
         }
 
+        //Determine whether hexagon will move left or right
         if (this.x - startingX < 0) {
             this.speed.x = speed;
         } else {

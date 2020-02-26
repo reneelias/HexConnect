@@ -12,10 +12,10 @@ class HexBoard {
         this.flashTriggered = false;
         this.flashTextureAlpha = 0;
 
-        this.colors = [0xffc219, 0x5ae63e, 0x4e57f5, 0xf04848];
+        //color order: yellow, green, blue, red, purple
+        this.colors = [0xffc219, 0x5ae63e, 0x42adf5, 0xf04848, 0x9042f5];
         this.createBoard(config.scene, config.game, this.size);
         this.dragging = false;
-        this.boardRectangle;
         this.mouseX = 0;
         this.mouseY = 0;
         this.scene = config.scene;
@@ -23,8 +23,20 @@ class HexBoard {
         // this.lineSprite = config.scene.add.sprite(50, 50, 'whiteDot', 0xffffff);
         // this.lineSprite.setScale(20, 100);
         // this.containsText = config.scene.add.text(16, 45, 'leftButton.isUp: ' + this.dragging, { fontSize: '32px', fill: '#000' });
-        // this.text = config.scene.add.text(16, 70, 'leftButton.isUp: ' + this.dragging, { fontSize: '32px', fill: '#000' });
         this.score = 0;
+        this.scoreText = config.scene.add.text(game.config.width / 2, 20, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' });
+        this.scoreText.x = game.config.width / 2 - this.scoreText.width / 2;
+
+
+        this.totalTime = 60;
+        this.timer = config.scene.time.addEvent({ delay: this.totalTime * 1000, loop: false })
+        this.time = this.totalTime;
+        this.timeText = config.scene.add.text(game.config.width / 2, 32, 'Time: ' + this.time, { fontSize: '32px', fill: '#000' });
+        this.timeText.x = game.config.width / 2 - this.timeText.width / 2;
+        this.timeText.y = game.config.height - this.timeText.height - 20;
+
+        this.gameOverText = config.scene.add.text(1000, 32, 'Game Over', { fontSize: '48px', fill: '#000' });
+
         this.clearAllColor = false;
         this.clearColor;
     }
@@ -33,34 +45,55 @@ class HexBoard {
         this.mouseX = game.input.activePointer.x;
         this.mouseY = game.input.activePointer.y;
 
-        //Updating hexagons and check for first hex click
-        this.hexagons.forEach(hexagon => {
-            hexagon.update();
-            if (hexagon.clicked && this.clickedHexagons.length == 0) {
-                this.dragging = true;
-                this.clickedHexagons.push(hexagon);
+        if (this.time > 0) {
+            //Updating hexagons and check for first hex click
+            this.hexagons.forEach(hexagon => {
+                hexagon.update(game.input.activePointer, this.clickedHexagons.length == 0);
+
+                if (hexagon.clicked && this.clickedHexagons.length == 0) {
+                    this.dragging = true;
+                    this.clickedHexagons.push(hexagon);
+                }
+            });
+
+            if (!game.input.activePointer.isDown && this.dragging) {
+                this.dragging = false;
+                this.hexDeletion();
             }
-        });
 
-        if (!game.input.activePointer.isDown && this.dragging) {
-            this.dragging = false;
-            this.hexDeletion();
+            if (this.dragging) {
+                this.hexSelection();
+            }
+
+            if (this.flashTriggered) {
+                this.flashAnimation();
+            }
+        } else {
+            //Game is over
+
+            this.hexagons.forEach(hexagon => {
+                if (hexagon.scale > .075) {
+                    hexagon.shrink();
+                } else if (hexagon.y != -100) {
+                    hexagon.y = -100;
+                }
+            });
+
+            this.gameOverText.x = game.config.width / 2 - this.gameOverText.width / 2;
+            this.gameOverText.y = game.config.height / 2 - this.gameOverText.height * 2;
         }
-        
-        if (this.dragging) {
-            this.hexSelection();
-        }
 
+        this.time = this.totalTime - this.totalTime * this.timer.getProgress();
+        // console.log("time: " + this.time);
 
-        if (this.flashTriggered) {
-            this.flashAnimation();
-        }
+        //Score text
+        this.scoreText.setText('Score: ' + this.score);
+        this.scoreText.x = game.config.width / 2 - this.scoreText.width / 2;
 
-        //Debug Text
-        // this.text.setText('activePointer.isDown: ' + game.input.activePointer.isDown);
-        // var rect = this.hexagons[0].getBounds();
-        // this.containsText.setText('contains: ' + rect.contains(this.mouseX, this.mouseY));
-        // this.text.setText('rect: ' + rect.x + ' ' + rect.y + '|| mouse: ' + this.mouseX + ' ' + this.mouseY);
+        //Time Text
+        this.timeText.setText('Time: ' + Math.floor(this.time));
+        this.timeText.x = game.config.width / 2 - this.timeText.width / 2;
+        this.timeText.y = game.config.height - this.timeText.height - 20;
     }
 
     hexSelection() {
@@ -81,6 +114,7 @@ class HexBoard {
                     this.clickedHexagons[this.clickedHexagons.length - 1].reset();
                     this.clickedHexagons.pop();
                 }
+                //Closed loop check
                 else if (this.clickedHexagons.includes(hexagon) && this.clickedHexagons.length >= 4 &&
                     hexagon == this.clickedHexagons[0] && distanceBetweenHexs == hexagon.width) {
                     this.clearAllColor = true;
@@ -110,6 +144,7 @@ class HexBoard {
             if (this.clickedHexagons.length > 1) {
                 hexagon.shrinkActivated = true;
                 this.removedHexagons.push(hexagon);
+                this.score++;
 
                 for (var i = 0; i < this.positions.length; i++) {
                     if (this.positions[i].x == hexagon.x && this.positions[i].y == hexagon.y) {
