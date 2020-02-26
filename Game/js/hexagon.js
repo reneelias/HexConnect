@@ -1,7 +1,4 @@
 class Hexagon extends Phaser.GameObjects.Sprite {
-
-    // clicked = false;
-    // color = 0x000000;
     constructor(config) {
         super(config.scene, config.x, config.y, config.texture, config.tint);
 
@@ -54,7 +51,7 @@ class Hexagon extends Phaser.GameObjects.Sprite {
     shrink() {
         var scaleRate = .75;
         this.setScale(this.scale * scaleRate, this.scale * scaleRate);
-        
+
         if (this.scale < .05) {
             this.shrinkActivated = false;
             this.setScale(1, 1);
@@ -65,7 +62,7 @@ class Hexagon extends Phaser.GameObjects.Sprite {
 
     startMoving(destinationPositions, startingX, startingY) {
         this.moving = true;
-        var speed = 6;
+        var speed = 10;
         this.resetY = startingY;
         this.resetX = startingX;
 

@@ -1,7 +1,7 @@
 class HexBoard {
     constructor(config) {
         this.size = config.size;
-        this.hexagons;
+        this.hexagons = [];
         this.positions = [];
         this.clickedHexagons = [];
         this.removedHexagons = [];
@@ -14,7 +14,7 @@ class HexBoard {
 
         //color order: yellow, green, blue, red, purple
         this.colors = [0xffc219, 0x5ae63e, 0x42adf5, 0xf04848, 0x9042f5];
-        this.createBoard(config.scene, config.game, this.size);
+
         this.dragging = false;
         this.mouseX = 0;
         this.mouseY = 0;
@@ -29,19 +29,26 @@ class HexBoard {
 
 
         this.totalTime = 60;
-        this.timer = config.scene.time.addEvent({ delay: this.totalTime * 1000, loop: false })
+
+        this.timer = config.scene.time.addEvent({ delay: this.totalTime * 1000, loop: false });
+       
         this.time = this.totalTime;
         this.timeText = config.scene.add.text(game.config.width / 2, 32, 'Time: ' + this.time, { fontSize: '32px', fill: '#000' });
         this.timeText.x = game.config.width / 2 - this.timeText.width / 2;
         this.timeText.y = game.config.height - this.timeText.height - 20;
 
         this.gameOverText = config.scene.add.text(1000, 32, 'Game Over', { fontSize: '48px', fill: '#000' });
-
+        this.gameOverText.x = game.config.width / 2 - this.gameOverText.width / 2;
+        this.gameOverText.y = game.config.height / 2 - this.gameOverText.height * 2;
         this.clearAllColor = false;
         this.clearColor;
+
+        this.lineSprites = [];
+        
+        this.createBoard(config.scene, config.game, this.size);
     }
 
-    update(game) {
+    update(game, scene) {
         this.mouseX = game.input.activePointer.x;
         this.mouseY = game.input.activePointer.y;
 
@@ -62,7 +69,7 @@ class HexBoard {
             }
 
             if (this.dragging) {
-                this.hexSelection();
+                this.hexSelection(scene);
             }
 
             if (this.flashTriggered) {
@@ -70,25 +77,19 @@ class HexBoard {
             }
         } else {
             //Game is over
+            this.gameOverCleanup();
 
-            this.hexagons.forEach(hexagon => {
-                if (hexagon.scale > .075) {
-                    hexagon.shrink();
-                } else if (hexagon.y != -100) {
-                    hexagon.y = -100;
-                }
-            });
-
-            this.gameOverText.x = game.config.width / 2 - this.gameOverText.width / 2;
-            this.gameOverText.y = game.config.height / 2 - this.gameOverText.height * 2;
+            if(!this.gameOverText.visible){
+                this.gameOverText.visible = true;
+            }
         }
-
-        this.time = this.totalTime - this.totalTime * this.timer.getProgress();
-        // console.log("time: " + this.time);
 
         //Score text
         this.scoreText.setText('Score: ' + this.score);
         this.scoreText.x = game.config.width / 2 - this.scoreText.width / 2;
+
+        //Time remaining calculation
+        this.time = this.totalTime - this.totalTime * this.timer.getProgress();
 
         //Time Text
         this.timeText.setText('Time: ' + Math.floor(this.time));
@@ -96,7 +97,13 @@ class HexBoard {
         this.timeText.y = game.config.height - this.timeText.height - 20;
     }
 
-    hexSelection() {
+    hexSelection(scene) {
+
+        if (this.lineSprites.length >= this.clickedHexagons.length) {
+            this.lineSprites[this.lineSprites.length - 1].destroy();
+            this.lineSprites.pop();
+        }
+
         this.hexagons.forEach(hexagon => {
             var lastClickedHex = this.clickedHexagons[this.clickedHexagons.length - 1];
             var distanceBetweenHexs = Math.ceil(Phaser.Math.Distance.Between(hexagon.x, hexagon.y, lastClickedHex.x, lastClickedHex.y));
@@ -107,12 +114,16 @@ class HexBoard {
                     distanceBetweenHexs == hexagon.width && hexagon != lastClickedHex) {
                     hexagon.click();
                     this.clickedHexagons.push(hexagon);
+
+                    this.addLine(scene, hexagon, lastClickedHex);
                 }
                 //Removes hexagons from selection
                 else if (this.clickedHexagons.includes(hexagon) && this.clickedHexagons.length > 1 &&
                     hexagon == this.clickedHexagons[this.clickedHexagons.length - 2]) {
                     this.clickedHexagons[this.clickedHexagons.length - 1].reset();
                     this.clickedHexagons.pop();
+                    this.lineSprites[this.lineSprites.length - 1].destroy();
+                    this.lineSprites.pop();
                 }
                 //Closed loop check
                 else if (this.clickedHexagons.includes(hexagon) && this.clickedHexagons.length >= 4 &&
@@ -123,12 +134,15 @@ class HexBoard {
                     this.flashTriggered = true;
                     this.flashTextureAlpha = .3;
                     this.flashTexture.alpha = this.flashTextureAlpha;
+                    this.addLine(scene, hexagon, lastClickedHex);
                 }
             }
         });
+
     }
 
     hexDeletion() {
+        //If closed loop achieved, all hexagons of the same color set to clicked
         if (this.clearAllColor) {
             this.hexagons.forEach(hexagon => {
                 if (!this.clickedHexagons.includes(hexagon) && hexagon.color == this.clearColor) {
@@ -139,6 +153,8 @@ class HexBoard {
             this.clearAllColor = false;
         }
 
+        //All clicked hexagons added for removal
+        //Board spots are set to unoccupied
         this.clickedHexagons.forEach(hexagon => {
             hexagon.reset();
             if (this.clickedHexagons.length > 1) {
@@ -156,12 +172,22 @@ class HexBoard {
         });
         this.clickedHexagons = [];
 
+        //Remove all line sprites between hexagons
+        for (var i = 0; i < this.lineSprites.length; i++) {
+            this.lineSprites[i].destroy();
+        }
+        this.lineSprites = [];
+
+        //An array with starting y positions to build a separation between
+        //hexagons falling in the same column
         var startingYs = [];
         for (var i = 0; i < this.size; i++) {
             startingYs.push(-100);
         }
         var currentCol = this.size - 1;
 
+        //Nested for loops that remove hexagons from the board
+        //and queue up paths for hexagons to move into new spots
         for (var i = this.positions.length - 1; i >= 0; i--) {
             if (!this.positions[i].occupied) {
                 var destinationPositions = [{ x: this.positions[i].x, y: this.positions[i].y }]
@@ -197,6 +223,17 @@ class HexBoard {
     }
 
     createBoard(scene, game, size) {
+        //Resetting global variables
+        this.hexagons = [];
+        this.positions = [];
+        this.clickedHexagons = [];
+        this.removedHexagons = [];
+        this.score = 0;
+        this.time = this.totalTime;
+        this.timer.destroy();
+        this.timer = scene.time.addEvent({ delay: this.totalTime * 1000, loop: false });
+        this.gameOverText.visible = false;
+
         var hexagons = [];
         var tempHex = scene.add.sprite(100, 100, 'hex');
         var y = (game.config.height - (tempHex.height - tempHex.height * .26) * this.size) / 2;
@@ -229,5 +266,32 @@ class HexBoard {
         if (this.flashTexture.alpha <= 0) {
             this.flashTriggered = false;
         }
+    }
+
+    addLine(scene, hexagon, previousHexgon) {
+        var tempLineSprite = scene.add.sprite(hexagon.x, hexagon.y, 'whiteDot', 0xffffff);
+        tempLineSprite.setOrigin(0, 0.5);
+        tempLineSprite.setScale(hexagon.width, 5);
+        tempLineSprite.angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.Between(hexagon.x, hexagon.y, previousHexgon.x, previousHexgon.y));
+        tempLineSprite.tint = hexagon.color;
+
+        this.lineSprites.push(tempLineSprite);
+    }
+
+    gameOverCleanup(){
+        //All hexagons disappear when game is over
+        this.hexagons.forEach(hexagon => {
+            if (hexagon.scale > .075) {
+                hexagon.shrink();
+            } else {
+                hexagon.destroy();
+            }
+        });
+
+        //Remove any remaining line sprites
+        for (var i = 0; i < this.lineSprites.length; i++) {
+            this.lineSprites[i].destroy();
+        }
+        this.lineSprites = [];
     }
 }
