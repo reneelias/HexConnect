@@ -7,10 +7,6 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.tint = this.color;
         config.scene.add.existing(this);
 
-        // this.setInteractive();
-        // this.on('pointerdown', this.click, this);
-        // this.on('pointerup', this.unclicked, this);
-
         this.shrinkActivated = false;
         // config.game.time.events.add(Phaser.Timer.QUARTER, this.shrink, config.scene);
         this.destinationPosition = { x: 0, y: 0 };
@@ -19,6 +15,8 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.destinations = [];
         this.resetX;
         this.resetY;
+
+        this.nextColor = this.color;
     }
 
     update(activePointer, firstClick) {
@@ -28,8 +26,8 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         if (this.moving && !this.shrinkActivated) {
             this.move();
         }
-        if(activePointer.isDown && this.getBounds().contains(activePointer.x, activePointer.y) &&
-            firstClick){
+        if (activePointer.isDown && this.getBounds().contains(activePointer.x, activePointer.y) &&
+            firstClick) {
             this.click();
         }
     }
@@ -57,6 +55,8 @@ class Hexagon extends Phaser.GameObjects.Sprite {
             this.setScale(1, 1);
             this.y = this.resetY;
             this.x = this.resetX;
+            this.color = this.nextColor;
+            this.setTint(this.color);
         }
     }
 
@@ -119,8 +119,7 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         }
     }
 
-    randomizeColor(colors) {
-        this.color = colors[Math.floor(Math.random() * Math.floor(colors.length))];
-        this.setTint(this.color);
+    randomizeColor(colors, colorsAmount) {
+        this.nextColor = colors[Math.floor(Math.random() * colorsAmount)];
     }
 }

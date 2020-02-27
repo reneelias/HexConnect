@@ -11,23 +11,29 @@ class Button extends Phaser.GameObjects.Sprite {
         this.text = config.scene.add.text(this.x, this.y, config.text, { fontSize: '30px', fill: '#000' });
         this.text.x -= this.text.width / 2;
         this.text.y -= this.text.height / 2;
+
+        this.justClicked = false;
+        this.pointerContained = false;
     }
 
     update(activePointer) {
+        this.pointerContained = this.getBounds().contains(activePointer.x, activePointer.y)
+        this.justClicked = !this.previouslyClicked && activePointer.isDown && this.pointerContained;
+
         if (this.previouslyClicked && !activePointer.isDown &&
-            this.getBounds().contains(activePointer.x, activePointer.y)) {
+            this.pointerContained) {
             this.click();
         } else if (!this.previouslyClicked && !activePointer.isDown ||
-            this.getBounds().contains(activePointer.x, activePointer.y)) {
+            this.pointerContained) {
         }
 
-        if (this.getBounds().contains(activePointer.x, activePointer.y)) {
+        if (this.pointerContained) {
             this.tint = 0x33a7ff;
         } else if (!this.clicked) {
             this.tint = this.color;
         }
 
-        this.previouslyClicked = activePointer.isDown && this.getBounds().contains(activePointer.x, activePointer.y);
+        this.previouslyClicked = activePointer.isDown && this.pointerContained;
     }
 
     click() {

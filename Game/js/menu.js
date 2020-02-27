@@ -18,6 +18,9 @@ class Menu extends Phaser.GameObjects.Sprite {
             this.sizeButtons[i].setScale(this.buttonSize / this.sizeButtons[i].width, this.buttonSize / this.sizeButtons[i].height);
             hexBoardsize += 2;
             buttonX += this.buttonSize;
+            if (i == 0) {
+                this.sizeButtons[i].click();
+            }
         }
 
         this.sizeText = config.scene.add.text(this.x, this.sizeButtons[0].y - this.buttonSize * 1.25, 'Board Size', { fontSize: '30px', fill: '#000' });
@@ -32,6 +35,9 @@ class Menu extends Phaser.GameObjects.Sprite {
             this.colorButtons[i].setScale(this.buttonSize / this.colorButtons[i].width, this.buttonSize / this.colorButtons[i].height);
             colorSize++;
             buttonX += this.buttonSize;
+            if (i == 0) {
+                this.colorButtons[i].click();
+            }
         }
 
         this.colorsText = config.scene.add.text(this.x, this.colorButtons[0].y - this.buttonSize * 1.25, 'Number of Colors', { fontSize: '30px', fill: '#000' });
@@ -39,15 +45,28 @@ class Menu extends Phaser.GameObjects.Sprite {
 
         this.playButton = new Button({ scene: config.scene, x: this.x, y: this.y + this.buttonSize * 3, texture: 'button', tint: 0xa4d6fc, text: 'Play' });
         this.playButton.setScale((this.buttonSize * 3) / this.playButton.width, this.buttonSize / this.playButton.height);
+
+        this.sizeValue = 6;
+        this.colorValue = 5;
     }
 
     update(activePointer) {
         this.sizeButtons.forEach(button => {
             button.update(activePointer);
+            if (button.justClicked) {
+                for (var i = 0; i < this.sizeButtons.length; i++) {
+                    button != this.sizeButtons[i] ? this.sizeButtons[i].unclick() : this.sizeValue = 6 + i * 2;
+                }
+            }
         });
 
         this.colorButtons.forEach(button => {
             button.update(activePointer);
+            if (button.justClicked) {
+                for (var i = 0; i < this.colorButtons.length; i++) {
+                    button != this.colorButtons[i] ? this.colorButtons[i].unclick() : this.colorValue = 5 + i;
+                }
+            }
         });
 
         this.playButton.update(activePointer);

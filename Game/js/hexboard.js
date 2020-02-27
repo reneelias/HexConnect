@@ -1,6 +1,5 @@
 class HexBoard {
     constructor(config) {
-        this.size = config.size;
         this.hexagons = [];
         this.positions = [];
         this.clickedHexagons = [];
@@ -12,21 +11,18 @@ class HexBoard {
         this.flashTriggered = false;
         this.flashTextureAlpha = 0;
 
-        //color order: yellow, green, blue, red, purple
-        this.colors = [0xffc219, 0x5ae63e, 0x42adf5, 0xf04848, 0x9042f5];
+        //color order: yellow, green, blue, red, purple, orange, pink, dark blue
+        this.colors = [0xe8db15, 0x2ad413, 0x42adf5, 0xf04848, 0x9042f5, 0xf78b25, 0xff87df, 0x0031d1];
+        this.colorsAmount = 5;
 
         this.dragging = false;
         this.mouseX = 0;
         this.mouseY = 0;
         this.scene = config.scene;
 
-        // this.lineSprite = config.scene.add.sprite(50, 50, 'whiteDot', 0xffffff);
-        // this.lineSprite.setScale(20, 100);
-        // this.containsText = config.scene.add.text(16, 45, 'leftButton.isUp: ' + this.dragging, { fontSize: '32px', fill: '#000' });
         this.score = 0;
         this.scoreText = config.scene.add.text(game.config.width / 2, 20, 'Score: ' + this.score, { fontSize: '32px', fill: '#000' });
         this.scoreText.x = game.config.width / 2 - this.scoreText.width / 2;
-
 
         this.totalTime = 60;
 
@@ -46,7 +42,6 @@ class HexBoard {
         this.lineSprites = [];
         this.gameOver = true;
         this.gameOverCounter = 0;
-        // this.createBoard(config.scene, config.game, this.size);
     }
 
     update(game, scene) {
@@ -81,7 +76,7 @@ class HexBoard {
             this.gameOverCleanup();
 
             this.gameOverCounter++;
-            if(this.gameOverCounter > 60){
+            if (this.gameOverCounter > 60) {
                 this.gameOver = true;
             }
 
@@ -210,7 +205,7 @@ class HexBoard {
                     } else if (k < 0) {
                         this.removedHexagons[0].reset();
                         this.removedHexagons[0].startMoving(destinationPositions, this.positions[k + this.size].x, startingYs[currentCol]);
-                        this.removedHexagons[0].randomizeColor(this.colors);
+                        this.removedHexagons[0].randomizeColor(this.colors, this.colorsAmount);
                         this.removedHexagons.shift();
                         this.positions[i].occupied = true;
                         startingYs[currentCol] -= this.hexagons[0].height * 4;
@@ -227,8 +222,11 @@ class HexBoard {
         }
     }
 
-    createBoard(scene, game, size) {
+    createBoard(scene, game, size, colorsAmount) {
         this.resetVariables(scene);
+
+        this.size = size;
+        this.colorsAmount = colorsAmount;
 
         var hexagons = [];
         var tempHex = scene.add.sprite(100, 100, 'hex');
@@ -244,7 +242,7 @@ class HexBoard {
                 x = startingX;
             }
             for (var i = 0; i < size; i++) {
-                var randomTint = this.colors[Math.floor(Math.random() * Math.floor(this.colors.length))];
+                var randomTint = this.colors[Math.floor(Math.random() * this.colorsAmount)];
                 hexagons.push(new Hexagon({ scene: scene, x: x, y: y, texture: 'hex', tint: randomTint }));
                 this.positions.push({ x: x, y: y, occupied: true });
                 x += tempHex.width;
