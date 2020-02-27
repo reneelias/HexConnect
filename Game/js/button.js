@@ -6,7 +6,6 @@ class Button extends Phaser.GameObjects.Sprite {
         this.color = config.tint;
         this.tint = this.color;
         config.scene.add.existing(this);
-        this.setScale(1, .4);
 
         this.previouslyClicked = false;
         this.text = config.scene.add.text(this.x, this.y, config.text, { fontSize: '30px', fill: '#000' });
@@ -18,14 +17,13 @@ class Button extends Phaser.GameObjects.Sprite {
         if (this.previouslyClicked && !activePointer.isDown &&
             this.getBounds().contains(activePointer.x, activePointer.y)) {
             this.click();
-        } else if(!this.previouslyClicked && !activePointer.isDown || 
+        } else if (!this.previouslyClicked && !activePointer.isDown ||
             this.getBounds().contains(activePointer.x, activePointer.y)) {
-            this.clicked = false;
         }
 
-        if(this.getBounds().contains(activePointer.x, activePointer.y)){
+        if (this.getBounds().contains(activePointer.x, activePointer.y)) {
             this.tint = 0x33a7ff;
-        } else {
+        } else if (!this.clicked) {
             this.tint = this.color;
         }
 
@@ -34,20 +32,16 @@ class Button extends Phaser.GameObjects.Sprite {
 
     click() {
         this.clicked = true;
+        this.tint = 0x33a7ff;
     }
 
     unclick() {
         this.clicked = false;
+        this.tint = this.color;
     }
 
     setVisible(visible) {
-        if (visible) {
-            this.visible = true;
-            this.text.visible = true;
-        }
-        else {
-            this.visible = false;
-            this.text.visible = false;
-        }
+        this.visible = visible;
+        this.text.visible = visible;
     }
 }

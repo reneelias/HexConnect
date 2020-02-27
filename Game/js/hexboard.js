@@ -31,7 +31,7 @@ class HexBoard {
         this.totalTime = 60;
 
         this.timer = config.scene.time.addEvent({ delay: this.totalTime * 1000, loop: false });
-       
+
         this.time = this.totalTime;
         this.timeText = config.scene.add.text(game.config.width / 2, 32, 'Time: ' + this.time, { fontSize: '32px', fill: '#000' });
         this.timeText.x = game.config.width / 2 - this.timeText.width / 2;
@@ -44,8 +44,9 @@ class HexBoard {
         this.clearColor;
 
         this.lineSprites = [];
-        
-        this.createBoard(config.scene, config.game, this.size);
+        this.gameOver = true;
+        this.gameOverCounter = 0;
+        // this.createBoard(config.scene, config.game, this.size);
     }
 
     update(game, scene) {
@@ -79,7 +80,12 @@ class HexBoard {
             //Game is over
             this.gameOverCleanup();
 
-            if(!this.gameOverText.visible){
+            this.gameOverCounter++;
+            if(this.gameOverCounter > 60){
+                this.gameOver = true;
+            }
+
+            if (!this.gameOverText.visible) {
                 this.gameOverText.visible = true;
             }
         }
@@ -138,7 +144,6 @@ class HexBoard {
                 }
             }
         });
-
     }
 
     hexDeletion() {
@@ -223,16 +228,7 @@ class HexBoard {
     }
 
     createBoard(scene, game, size) {
-        //Resetting global variables
-        this.hexagons = [];
-        this.positions = [];
-        this.clickedHexagons = [];
-        this.removedHexagons = [];
-        this.score = 0;
-        this.time = this.totalTime;
-        this.timer.destroy();
-        this.timer = scene.time.addEvent({ delay: this.totalTime * 1000, loop: false });
-        this.gameOverText.visible = false;
+        this.resetVariables(scene);
 
         var hexagons = [];
         var tempHex = scene.add.sprite(100, 100, 'hex');
@@ -278,7 +274,7 @@ class HexBoard {
         this.lineSprites.push(tempLineSprite);
     }
 
-    gameOverCleanup(){
+    gameOverCleanup() {
         //All hexagons disappear when game is over
         this.hexagons.forEach(hexagon => {
             if (hexagon.scale > .075) {
@@ -292,6 +288,31 @@ class HexBoard {
         for (var i = 0; i < this.lineSprites.length; i++) {
             this.lineSprites[i].destroy();
         }
-        this.lineSprites = [];
+        if (this.lineSprites.length > 0) {
+            this.lineSprites = [];
+        }
+
+        if (this.flashTexture.alpha != 0) {
+            this.flashTexture.alpha = 0;
+            this.flashTriggered = false;
+            this.flashTextureAlpha = 0;
+        }
+    }
+
+    resetVariables(scene) {
+        this.hexagons = [];
+        this.positions = [];
+        this.clickedHexagons = [];
+        this.removedHexagons = [];
+        this.score = 0;
+        this.time = this.totalTime;
+        this.timer.destroy();
+        this.timer = scene.time.addEvent({ delay: this.totalTime * 1000, loop: false });
+        this.gameOverText.visible = false;
+        this.flashTexture.alpha = 0;
+        this.flashTriggered = false;
+        this.flashTextureAlpha = 0;
+        this.gameOver = false;
+        this.gameOverCounter = 0;
     }
 }
