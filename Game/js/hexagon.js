@@ -3,12 +3,13 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         super(config.scene, config.x, config.y, config.texture, config.tint);
 
         this.clicked = false;
+        //Color and tint seem redundant, but I hit a weird bug when changing tint values
+        //Didn't have enough time to go back and check for a solution
         this.color = config.tint;
         this.tint = this.color;
         config.scene.add.existing(this);
 
         this.shrinkActivated = false;
-        // config.game.time.events.add(Phaser.Timer.QUARTER, this.shrink, config.scene);
         this.destinationPosition = { x: 0, y: 0 };
         this.moving = false;
         this.speed = { x: 2, y: 2 };
@@ -16,16 +17,17 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.resetX;
         this.resetY;
 
+        //Next random color
         this.nextColor = this.color;
     }
 
     update(activePointer, firstClick) {
         if (this.shrinkActivated) {
             this.shrink();
-        }
-        if (this.moving && !this.shrinkActivated) {
+        } else if (this.moving) {
             this.move();
         }
+
         if (activePointer.isDown && this.getBounds().contains(activePointer.x, activePointer.y) &&
             firstClick) {
             this.click();
@@ -33,12 +35,11 @@ class Hexagon extends Phaser.GameObjects.Sprite {
     }
 
     click() {
+        /*NOTE: There is some overlap between click() in Hexagon and Button.
+        Ideally I'd have some sort of inheritance/overriding happening,
+        but because of time constraints, I was not able to implement that.*/
         this.clicked = true;
         this.setTexture('whiteHex');
-    }
-
-    unclicked() {
-        // this.clicked = false;
     }
 
     reset() {
@@ -86,23 +87,25 @@ class Hexagon extends Phaser.GameObjects.Sprite {
     }
 
     move() {
-        //move x coordinate
+        //Move x coordinate
         if ((this.x > this.destinationPosition.x && this.speed.x < 0) ||
             (this.x < this.destinationPosition.x && this.speed.x > 0)) {
             this.x += this.speed.x;
         }
+        //If we have passed destination x, snap to destination x
         else if ((this.x <= this.destinationPosition.x && this.speed.x < 0) ||
             (this.x >= this.destinationPosition.x && this.speed.x > 0)) {
             this.x = this.destinationPosition.x;
         }
-        //move y coordinate
+        //Move y coordinate
         if (this.y < this.destinationPosition.y) {
             this.y += this.speed.y;
         }
+        //If we have passed destination y, snap to destination y
         else if (this.y >= this.destinationPosition.y) {
             this.y = this.destinationPosition.y;
         }
-        //check if hexagon has arrived to position
+        //Check if hexagon has arrived to position
         if (this.x == this.destinationPosition.x && this.y == this.destinationPosition.y) {
             this.destinations.shift();
             if (this.destinations.length == 0) {

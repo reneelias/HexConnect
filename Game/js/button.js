@@ -2,18 +2,24 @@ class Button extends Phaser.GameObjects.Sprite {
     constructor(config) {
         super(config.scene, config.x, config.y, config.texture, config.tint);
 
+        //Initialize click states and whether pointer is contained or not
         this.clicked = false;
+        this.previouslyClicked = false;
+        this.justClicked = false;
+        this.pointerContained = false;
+
+        //Color and tint seem redundant, but I hit a weird bug when changing tint values
+        //Didn't have enough time to go back and check for a solution
         this.color = config.tint;
         this.tint = this.color;
         config.scene.add.existing(this);
 
-        this.previouslyClicked = false;
+        //Text associated with the button
         this.text = config.scene.add.text(this.x, this.y, config.text, { fontSize: '30px', fill: '#000' });
         this.text.x -= this.text.width / 2;
         this.text.y -= this.text.height / 2;
 
-        this.justClicked = false;
-        this.pointerContained = false;
+        this.highlightColor = 0x33a7ff;
     }
 
     update(activePointer) {
@@ -23,12 +29,10 @@ class Button extends Phaser.GameObjects.Sprite {
         if (this.previouslyClicked && !activePointer.isDown &&
             this.pointerContained) {
             this.click();
-        } else if (!this.previouslyClicked && !activePointer.isDown ||
-            this.pointerContained) {
-        }
+        } 
 
         if (this.pointerContained) {
-            this.tint = 0x33a7ff;
+            this.tint = this.highlightColor;
         } else if (!this.clicked) {
             this.tint = this.color;
         }
@@ -38,7 +42,7 @@ class Button extends Phaser.GameObjects.Sprite {
 
     click() {
         this.clicked = true;
-        this.tint = 0x33a7ff;
+        this.tint = this.highlightColor;
     }
 
     unclick() {
