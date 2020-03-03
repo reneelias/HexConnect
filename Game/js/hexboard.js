@@ -1,4 +1,5 @@
 class HexBoard {
+
     constructor(config) {
         //Stores all hexagons on the board
         this.hexagons = [];
@@ -56,6 +57,8 @@ class HexBoard {
         /*Hacky variable that keeps game over on screen for a while before
         menu pops back up. Better ways to handle this, but time.*/
         this.gameOverCounter = 0;
+
+        this.clearSound = config.scene.sound.add('clearSound');
     }
 
     update(game, scene) {
@@ -135,8 +138,8 @@ class HexBoard {
                     this.addLine(scene, hexagon, lastClickedHex);
                 }
                 //Removes hexagons from selection when back tracking
-                else if (this.selectedHexagons.includes(hexagon) && this.selectedHexagons.length > 1 &&
-                    hexagon == this.selectedHexagons[this.selectedHexagons.length - 2]) {
+                else if ((this.selectedHexagons.includes(hexagon) && this.selectedHexagons.length > 1 &&
+                    hexagon == this.selectedHexagons[this.selectedHexagons.length - 2])) {
                     this.selectedHexagons[this.selectedHexagons.length - 1].reset();
                     this.selectedHexagons.pop();
                     this.lineSprites[this.lineSprites.length - 1].destroy();
@@ -153,6 +156,10 @@ class HexBoard {
                     this.flashTexture.alpha = this.flashTextureAlpha;
                     this.addLine(scene, hexagon, lastClickedHex);
                 }
+                //Makes sure to cancel the clear-all-of-the-same-color function when back tracking
+                else if(this.clearAllColor && hexagon != this.selectedHexagons[0] && this.selectedHexagons.includes(hexagon)){
+                    this.clearAllColor = false;
+                }
             }
         });
     }
@@ -167,6 +174,7 @@ class HexBoard {
                 }
             });
             this.clearAllColor = false;
+            this.clearSound.play();
         }
 
         //All selected hexagons being added for removal

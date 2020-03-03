@@ -21,6 +21,9 @@ function preload() {
     this.load.image('whiteHex', 'assets/HexagonPieceThick15BorderWhite50.png');
     this.load.image('whiteDot', 'assets/WhitePixel.png');
     this.load.image('button', 'assets/SquareButton.png')
+
+    this.load.audio('hitSound', 'assets/WoodenHit3.mp3');
+    this.load.audio('clearSound', 'assets/ClearSound.mp3');
 }
 
 

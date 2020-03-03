@@ -17,6 +17,8 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         this.resetX;
         this.resetY;
 
+        this.hitSound = config.scene.sound.add('hitSound');
+
         //Next random color
         this.nextColor = this.color;
     }
@@ -107,6 +109,8 @@ class Hexagon extends Phaser.GameObjects.Sprite {
         }
         //Check if hexagon has arrived to position
         if (this.x == this.destinationPosition.x && this.y == this.destinationPosition.y) {
+            this.hitSound.play();
+
             this.destinations.shift();
             if (this.destinations.length == 0) {
                 this.moving = false;
